@@ -30,7 +30,7 @@ export class UserController {
     }
   }
 
-  @Get('')
+  @Get('all')
   async getAllUsers() {
     return await this.userService.getAllUsers();
   }

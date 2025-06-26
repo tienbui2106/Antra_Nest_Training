@@ -12,7 +12,7 @@ export class CreateUserDto {
 
   @IsString()
   @IsOptional()
-  readonly phone: string;
+  readonly phoneNumber: string;
 
   @IsIn(["user", "admin"], {
     message: "Role must be either 'user' or 'admin'",
