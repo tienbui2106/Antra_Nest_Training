@@ -1,28 +1,37 @@
-import { Body, ConflictException, Controller, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
+import { Body, ConflictException, Controller, Get, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDTO } from './dto/login.dto';
+import { UserService } from './user/user.service';
 
 @Controller('user')
 export class UserController {
+  constructor(private userService: UserService) { }
 
   @Post('register')
-  registerUser(@Body() body: CreateUserDto): string {
-    if (body.username !== 'tbui171483') {
-      return 'User registered successfully';
-    } else {
-      throw new ConflictException('Username already exists');
+  async registerUser(@Body() body: CreateUserDto): Promise<Object> {
+    console.log(body);
+    try {
+      await this.userService.register(body);
+      return { message: 'User registered successfully' };
+    }
+    catch (error) {
+      throw new ConflictException('The username and/or email has already been taken');
     }
   }
 
   @Post('login')
   @HttpCode(200)
-  loginUser(@Body() body: LoginDTO): string {
-    if (body.username === 'tbui171483' && body.password === '123456789') {
-      return 'User logged in successfully';
-    }
-    else {
+  async loginUser(@Body() body: LoginDTO): Promise<Object> {
+    const user = await this.userService.login(body);
+    if (user) {
+      return { message: 'Login successful' };
+    } else {
       throw new UnauthorizedException('Invalid username or password');
     }
   }
 
+  @Get('')
+  async getAllUsers() {
+    return await this.userService.getAllUsers();
+  }
 }
