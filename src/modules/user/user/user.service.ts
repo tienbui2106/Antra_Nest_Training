@@ -4,16 +4,29 @@ import { Model } from 'mongoose';
 import { User } from '../schema/user.schema';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginDTO } from '../dto/login.dto';
+import { hash, compare } from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) { }
 
-  login(user: LoginDTO) {
-    return this.userModel.findOne({ username: user.username, password: user.password }).exec();
+  async login(user: LoginDTO) {
+    const { username, password } = user;
+    const userInfoFromDB = await this.userModel.findOne({ username }).exec();
+    if (!userInfoFromDB) {
+      throw new Error('Username does not exist');
+    }
+    const match = await compare(password, userInfoFromDB.password);
+    if (!match) {
+      throw new Error('Invalid password');
+    }
+    return match
   }
 
-  register(user: CreateUserDto) {
+  async register(user: CreateUserDto) {
+    const hashedPassword = await hash(user.password, 10);
+    user = { ...user, password: hashedPassword };
+    console.log(user);
     return this.userModel.create(user);
   }
 

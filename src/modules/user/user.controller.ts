@@ -1,4 +1,4 @@
-import { Body, ConflictException, Controller, Get, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
+import { BadGatewayException, Body, ConflictException, Controller, Get, HttpCode, NotFoundException, Patch, Post, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDTO } from './dto/login.dto';
 import { UserService } from './user/user.service';
@@ -9,7 +9,6 @@ export class UserController {
 
   @Post('register')
   async registerUser(@Body() body: CreateUserDto): Promise<Object> {
-    console.log(body);
     try {
       await this.userService.register(body);
       return { message: 'User registered successfully' };
@@ -21,12 +20,18 @@ export class UserController {
 
   @Post('login')
   @HttpCode(200)
-  async loginUser(@Body() body: LoginDTO): Promise<Object> {
-    const user = await this.userService.login(body);
-    if (user) {
+  async loginUser(@Body() body: LoginDTO) {
+    try {
+      await this.userService.login(body);
       return { message: 'Login successful' };
-    } else {
-      throw new UnauthorizedException('Invalid username or password');
+    }
+    catch (error) {
+      if (error.message === 'Username does not exist') {
+        throw new NotFoundException('Username does not exist');
+      } else if (error.message === 'Invalid password') {
+        throw new UnauthorizedException('Invalid password');
+      }
+      throw new BadGatewayException('An error occurred during login');
     }
   }
 
